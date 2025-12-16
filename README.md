@@ -6,14 +6,14 @@
 
 실제 기계 대여 사업을 위한 통합 관리 시스템입니다. 백엔드, 웹 프론트엔드, 모바일 앱을 포함하는 모노레포 프로젝트입니다.
 
-## 🎯 프로젝트 목적
+## 프로젝트 목적
 
 - **포트폴리오**: 실무 중심의 풀스택 개발 역량 증명
 - **상업적 활용**: 실제 기계 대여 사업 운영 도구
 - **기술 학습**: 최신 기술 스택과 Best Practice 적용
 - **확장성**: 웹에서 모바일로 확장 가능한 아키텍처
 
-## 🏗️ 프로젝트 구조
+## 프로젝트 구조
 
 ```
 equipment-rental-system/
@@ -40,7 +40,7 @@ equipment-rental-system/
 └── README.md           # 이 파일
 ```
 
-## 🚀 주요 기능
+## 주요 기능
 
 ### 기계 관리
 - 기계 등록/수정/삭제
@@ -65,7 +65,7 @@ equipment-rental-system/
 - 대여율 및 가동률 리포트
 - 보증금 현황 관리
 
-## 💻 기술 스택
+## 기술 스택
 
 ### Backend
 - **Language**: Java 21
@@ -88,7 +88,7 @@ equipment-rental-system/
 - **CI/CD**: GitHub Actions (예정)
 - **Monitoring**: Spring Boot Actuator
 
-## 🛠️ 시작하기
+## 시작하기
 
 ### 사전 요구사항
 - Java 21
@@ -125,14 +125,14 @@ docker-compose logs -f
 docker-compose down
 ```
 
-## 📚 문서
+## 문서
 
 - [백엔드 개발 가이드](./backend/README.md)
 - [API 문서](./docs/api/) (예정)
 - [아키텍처 설계](./docs/architecture/) (예정)
 - [개발 가이드라인](./CLAUDE.md)
 
-## 🗓️ 개발 로드맵
+## 개발 로드맵
 
 ### Phase 1: MVP (진행 중)
 - [x] 프로젝트 초기 설정
@@ -154,7 +154,7 @@ docker-compose down
 - [ ] 결제 시스템 연동
 - [ ] 고급 보고서 기능
 
-## 🔐 보안
+## 보안
 
 - JWT 토큰 기반 인증/인가
 - 역할 기반 접근 제어 (RBAC)
@@ -163,28 +163,15 @@ docker-compose down
 - CORS 정책 설정
 - 입력값 검증 (Validation)
 
-## 📈 성능 최적화
+## 성능 최적화
 
 - Redis 캐싱 전략
 - 데이터베이스 인덱싱
 - 페이지네이션
 - N+1 쿼리 최적화
 - API 응답 압축
-
-## 🤝 기여
-
-이 프로젝트는 개인 포트폴리오 및 실제 사업용으로 개발 중입니다.
-
-## 📄 라이선스
-
-Private - All Rights Reserved
-
-## 📞 문의
-
-프로젝트 관련 문의 또는 피드백은 이슈로 남겨주세요.
-
 ---
 
 **Last Updated**: 2025-12-16
 **Current Phase**: Phase 1 - MVP Development
-**Status**: 🚧 In Active Development
+**Status**: In Active Development
