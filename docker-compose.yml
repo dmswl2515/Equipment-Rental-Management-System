@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: equipment-rental-db
+    environment:
+      POSTGRES_DB: equipment_rental
+      POSTGRES_USER: rental_user
+      POSTGRES_PASSWORD: rental_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - equipment-rental-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: equipment-rental-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - equipment-rental-network
+
+  # Backend (Spring Boot) - 나중에 활성화
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: equipment-rental-backend
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: docker
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/equipment_rental
+  #     SPRING_DATASOURCE_USERNAME: rental_user
+  #     SPRING_DATASOURCE_PASSWORD: rental_password
+  #     SPRING_REDIS_HOST: redis
+  #     SPRING_REDIS_PORT: 6379
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   networks:
+  #     - equipment-rental-network
+
+  # Frontend (React) - 나중에 추가
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: equipment-rental-frontend
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - equipment-rental-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  equipment-rental-network:
+    driver: bridge
