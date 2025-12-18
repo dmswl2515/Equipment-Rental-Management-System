@@ -12,7 +12,7 @@ public enum RentalStatus {
     EXTENSION_REQUESTED("연장요청"),  // 대여 기간 연장 요청
     OVERDUE("연체중"),               // 반납 기한 초과
     DEPOSIT_PENDING("보증금대기"),    // 보증금 입금 전
-    RETURNED_DAMAGED("파손반납");    // 기계 파손 상태로 반납
+    RETURED_DAMAGED("파손반납");    // 기계 파손 상태로 반납
 
     private final String description;
 

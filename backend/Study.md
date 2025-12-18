@@ -3,6 +3,9 @@
 ## 목차
 
 - [@Builder 애노테이션 정리](#builder-애노테이션-정리)
+- [JPA 연관관계 매핑 정리](#jpa-연관관계-매핑-정리)
+    - [@ManyToOne (다대일 관계)](#manytoone-다대일-관계)
+    - [FetchType.LAZY (지연 로딩)](#fetchtypelazy-지연-로딩)
 
 ---
 
@@ -97,3 +100,187 @@ Customer business = Customer.builder()
         .businessNumber("123-45-67890")
         .build();
 ```
+---
+
+## JPA 연관관계 매핑 정리
+
+### @ManyToOne (다대일 관계)
+```java
+@ManyToOne
+@JoinColumn(name = "machine_id")
+private Machine machine;
+```
+
+#### 의미
+- 여러 개의 Rental → 하나의 Machine
+- 한 기계가 여러 번 대여될 수 있음
+
+#### 예시
+```
+굴착기(Machine)
+  ← Rental #1 (2024-01-01 ~ 2024-01-10)
+  ← Rental #2 (2024-02-01 ~ 2024-02-15)
+  ← Rental #3 (2024-03-01 ~ 2024-03-20)
+```
+
+#### 데이터베이스 구조
+```sql
+-- rental 테이블
+CREATE TABLE rental (
+    id BIGINT PRIMARY KEY,
+    machine_id BIGINT,          -- 외래키
+    customer_id BIGINT,
+    start_date DATE,
+    end_date DATE,
+    FOREIGN KEY (machine_id) REFERENCES machine(id)
+);
+```
+
+### FetchType.LAZY (지연 로딩)
+```java
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "machine_id")
+private Machine machine;
+```
+
+#### 의미
+- Rental을 조회할 때 Machine 정보는 나중에 필요할 때 가져옴
+- 성능 최적화!
+
+#### 예시
+
+**LAZY 로딩 (추천)**
+```java
+// LAZY: Rental만 먼저 조회 (빠름!)
+Rental rental = rentalRepository.findById(1L);
+
+// Machine이 필요할 때 그때 DB 조회
+String machineName = rental.getMachine().getName();  // 이때 DB 조회!
+```
+
+**EAGER 로딩 vs LAZY 로딩 비교**
+```java
+// EAGER: 항상 Machine까지 함께 조회 (무거움)
+@ManyToOne(fetch = FetchType.EAGER)  // 사용 비추천
+private Machine machine;
+
+// LAZY: 필요할 때만 조회 (가벼움) 
+@ManyToOne(fetch = FetchType.LAZY)   // 추천!
+private Machine machine;
+```
+
+#### 실무 활용 예시
+```java
+// 대여 목록 조회 (Machine 정보 불필요)
+List rentals = rentalRepository.findAll();
+for (Rental rental : rentals) {
+    System.out.println("대여 ID: " + rental.getId());
+    // Machine 정보는 조회하지 않음 → 빠른 성능!
+}
+
+// 특정 대여의 상세 정보 (Machine 정보 필요)
+Rental rental = rentalRepository.findById(1L);
+System.out.println("기계명: " + rental.getMachine().getName());  // 이때 DB 조회
+```
+
+### @JoinColumn 외래키 설정
+```java
+@JoinColumn(name = "machine_id")
+private Machine machine;
+```
+
+#### 데이터베이스 테이블 구조
+```sql
+-- machine 테이블 (부모 테이블)
+CREATE TABLE machine (
+    id BIGINT PRIMARY KEY,          -- 기본키
+    name VARCHAR(100),
+    model VARCHAR(50),
+    daily_rate DECIMAL(10,2)
+);
+
+-- rental 테이블 (자식 테이블)  
+CREATE TABLE rental (
+    id BIGINT PRIMARY KEY,          -- 기본키
+    machine_id BIGINT,              -- 외래키 ← 여기가 핵심!
+    customer_id BIGINT,
+    start_date DATE,
+    end_date DATE,
+    total_amount DECIMAL(12,2),
+    
+    FOREIGN KEY (machine_id) REFERENCES machine(id)  -- 외래키 제약 조건
+);
+```
+
+#### @JoinColumn의 의미
+```
+@JoinColumn(name = "machine_id")의 뜻:
+
+1. "rental 테이블에 machine_id라는 컬럼을 만들어라"
+2. "이 컬럼은 machine 테이블의 id를 참조하는 외래키다"
+3. "Rental 객체의 machine 필드와 이 컬럼을 연결해라"
+```
+
+#### 외래키가 필요한 이유
+
+**1. 데이터 무결성 보장**
+```sql
+-- ✅ 올바른 데이터 입력
+INSERT INTO rental (id, machine_id, customer_id, start_date) 
+VALUES (1, 100, 200, '2024-01-01');  -- machine_id = 100이 machine 테이블에 존재
+
+-- ❌ 잘못된 데이터 입력 시도
+INSERT INTO rental (id, machine_id, customer_id, start_date) 
+VALUES (2, 999, 200, '2024-01-01');  -- machine_id = 999가 존재하지 않음
+
+-- 결과: 외래키 제약 조건 위반 에러!
+-- ERROR: Foreign key constraint violation
+```
+
+**2. 참조 무결성 유지**
+```sql
+-- ❌ 이런 상황을 방지!
+-- machine 테이블에서 기계 삭제 시도
+DELETE FROM machine WHERE id = 100;
+
+-- 하지만 rental 테이블에서 machine_id = 100인 대여 기록이 있으면?
+-- 외래키가 있으면: 삭제 불가 (참조 무결성 보장)
+-- 외래키가 없으면: 삭제됨 (고아 레코드 발생!)
+```
+
+#### 실제 동작 예시
+
+**Java 코드에서 사용**
+```java
+// 대여 생성
+Rental rental = Rental.builder()
+    .machine(existingMachine)  // Machine 객체 할당
+    .customer(existingCustomer)
+    .startDate(LocalDate.now())
+    .endDate(LocalDate.now().plusDays(7))
+    .build();
+
+rentalRepository.save(rental);
+
+// JPA가 실행하는 SQL:
+// INSERT INTO rental (id, machine_id, customer_id, start_date, end_date) 
+// VALUES (1, 100, 200, '2024-01-01', '2024-01-08');
+//            ↑ machine.getId() 값이 자동으로 들어감!
+```
+
+### 결론
+
+#### @ManyToOne 핵심
+- **다대일 관계 표현** - 여러 대여가 하나의 기계를 참조
+- **외래키 관리** - @JoinColumn으로 데이터베이스 연결
+- **객체 지향적 접근** - rental.getMachine()으로 연관된 객체에 쉽게 접근
+
+#### FetchType.LAZY 핵심
+- **성능 최적화** - 필요한 데이터만 조회
+- **N+1 문제 방지** - 불필요한 쿼리 실행 방지
+- **실무 표준** - 대부분의 연관관계에서 LAZY 사용 권장
+
+#### @JoinColumn 핵심
+- **데이터 무결성** - 존재하지 않는 기계에 대한 대여 생성 방지
+- **참조 무결성** - 기계가 삭제되면 관련 대여 처리 방식 제어
+- **비즈니스 규칙** - "대여는 반드시 특정 기계에 속해야 함" 규칙 강제
