@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.rental'
 version = '0.0.1-SNAPSHOT'
-description = 'Equipment Rental Management System'
+description = 'CampRent - Camping Equipment Rental Platform'
 
 java {
 	toolchain {

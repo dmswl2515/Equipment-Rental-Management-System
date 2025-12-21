@@ -1,4 +1,4 @@
-package com.rental.equipmentsystem.domain.machine;
+package com.rental.camprent.domain.machine;
 
 /**
  * 기계 상태

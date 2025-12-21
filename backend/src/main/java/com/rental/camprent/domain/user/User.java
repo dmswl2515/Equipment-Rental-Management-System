@@ -1,4 +1,4 @@
-package com.rental.equipmentsystem.domain.user;
+package com.rental.camprent.domain.user;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

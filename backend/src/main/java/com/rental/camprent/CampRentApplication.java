@@ -1,13 +1,13 @@
-package com.rental.equipmentsystem;
+package com.rental.camprent;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class EquipmentRentalSystemApplication {
+public class CampRentApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(EquipmentRentalSystemApplication.class, args);
+		SpringApplication.run(CampRentApplication.class, args);
 	}
 
 }

@@ -1,7 +1,7 @@
-package com.rental.equipmentsystem.domain.rental;
+package com.rental.camprent.domain.rental;
 
-import com.rental.equipmentsystem.domain.customer.Customer;
-import com.rental.equipmentsystem.domain.machine.Machine;
+import com.rental.camprent.domain.customer.Customer;
+import com.rental.camprent.domain.machine.Machine;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

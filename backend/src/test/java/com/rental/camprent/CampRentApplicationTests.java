@@ -1,10 +1,10 @@
-package com.rental.equipmentsystem;
+package com.rental.camprent;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class EquipmentRentalSystemApplicationTests {
+class CampRentApplicationTests {
 
 	@Test
 	void contextLoads() {

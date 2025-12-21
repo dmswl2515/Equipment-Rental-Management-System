@@ -1,4 +1,4 @@
-package com.rental.equipmentsystem.domain.customer;
+package com.rental.camprent.domain.customer;
 
 /**
  * 고객 유형
