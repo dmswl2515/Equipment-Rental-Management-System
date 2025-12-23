@@ -1,4 +1,4 @@
-package com.rental.camprent.domain.rental;
+package com.rental.camprent.domain.campingrental;
 
 /**
  * 대여 상태

@@ -1,4 +1,4 @@
-package com.rental.camprent.domain.machine;
+package com.rental.camprent.domain.campingitem;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -36,7 +36,7 @@ public class Machine {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private MachineStatus status;       // 기계 상태
+    private CampingItemStatus status;       // 기계 상태
 
     @Column(updatable = false)
     private LocalDateTime createdAt;    // 등록일시
@@ -45,7 +45,7 @@ public class Machine {
 
     @Builder
     public Machine(String name, String model, String location, BigDecimal dailyRate,
-                   MachineStatus status) {
+                   CampingItemStatus status) {
         this.name = name;
         this.model = model;
         this.location = location;
@@ -68,7 +68,7 @@ public class Machine {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updateStatus(MachineStatus status) {
+    public void updateStatus(CampingItemStatus status) {
         this.status = status;
         this.updatedAt = LocalDateTime.now();
     }
