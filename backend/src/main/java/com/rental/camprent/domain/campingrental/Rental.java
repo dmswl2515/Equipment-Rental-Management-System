@@ -1,7 +1,7 @@
 package com.rental.camprent.domain.campingrental;
 
 import com.rental.camprent.domain.customer.Customer;
-import com.rental.camprent.domain.campingitem.Machine;
+import com.rental.camprent.domain.campingitem.CampingItem;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -29,7 +29,7 @@ public class Rental {
     // ===== JPA 관계 매핑 시작 =====
     @ManyToOne(fetch = FetchType.LAZY)  // 다대일, 지연 로딩
     @JoinColumn(name = "machine_id", nullable = false)
-    private Machine machine;            // 대여 기계
+    private CampingItem machine;            // 대여 기계
 
     @ManyToOne(fetch = FetchType.LAZY)  // 다대일, 지연 로딩
     @JoinColumn(name = "customer_id", nullable = false)
@@ -63,7 +63,7 @@ public class Rental {
     private LocalDateTime updatedAt;    // 수정일시
 
     @Builder
-    public Rental(Machine machine, Customer customer, LocalDate startDate,
+    public Rental(CampingItem machine, Customer customer, LocalDate startDate,
                   LocalDate endDate, BigDecimal deposit, String notes) {
         this.machine = machine;
         this.customer = customer;
@@ -80,10 +80,11 @@ public class Rental {
     // ===== 비즈니스 메서드 시작 =====
     /**
      *  총 비용 계산 (일일 대여료 * 대여 일 수)
+     *  TODO: 나중에 성수기 요금 반영하도록 수정 예정
      */
-    private BigDecimal calculateTotalCost(Machine machine, LocalDate startDate, LocalDate endDate) {
+    private BigDecimal calculateTotalCost(CampingItem machine, LocalDate startDate, LocalDate endDate) {
         long days = ChronoUnit.DAYS.between(startDate, endDate) + 1;    // 시작일 포함
-        return machine.getDailyRate().multiply(BigDecimal.valueOf(days));
+        return machine.getBaseDailyRate().multiply(BigDecimal.valueOf(days));
     }
 
     /**
