@@ -2,14 +2,16 @@
 
 ## 목차
 
-- [@Builder 애노테이션 정리](#builder-애노테이션-정리)
+- [@Builder 어노테이션 정리](#builder-어노테이션-정리)
 - [JPA 연관관계 매핑 정리](#jpa-연관관계-매핑-정리)
     - [@ManyToOne (다대일 관계)](#manytoone-다대일-관계)
     - [FetchType.LAZY (지연 로딩)](#fetchtypelazy-지연-로딩)
 - [비즈니스 로직 위치: Entity vs Service](#비즈니스-로직-위치-entity-vs-service)
+- [Validation 어노테이션 (@NotNull vs @NotBlank)](#validation-어노테이션-notnull-vs-notblank)
+- [DTO (Data Transfer Object) 패턴](#dto-data-transfer-object-패턴)
 ---
 
-## @Builder 애노테이션 정리
+## @Builder 어노테이션 정리
 
 **@Builder란:**
 > **롬복(Lombok)에서 제공하는 애노테이션으로, 빌더 패턴(Builder Pattern)을 자동으로 구현해주는 도구**
@@ -17,12 +19,12 @@
 ### 기본 개념
 ```java
 // 빌더 패턴: 복잡한 객체를 단계별로 생성하는 디자인 패턴
-// 롬복 @Builder: 이 패턴을 자동으로 코드 생성해주는 애노테이션
+// 롬복 @Builder: 이 패턴을 자동으로 코드 생성해주는 어노테이션
 ```
 
 ### 동작 원리
 ```java
-@Builder  // 이 애노테이션 하나로
+@Builder  // 이 어노테이션 하나로
 public Customer(매개변수들...) { ... }
 
 // 롬복이 자동으로 이런 코드들을 생성:
@@ -229,8 +231,8 @@ CREATE TABLE rental (
 INSERT INTO rental (id, machine_id, customer_id, start_date) 
 VALUES (1, 100, 200, '2024-01-01');  -- machine_id = 100이 machine 테이블에 존재
 
--- ❌ 잘못된 데이터 입력 시도
-INSERT INTO rental (id, machine_id, customer_id, start_date) 
+-- 잘못된 데이터 입력 시도
+INSERT INTO rental (id, machine_id, customer_id, start_date)
 VALUES (2, 999, 200, '2024-01-01');  -- machine_id = 999가 존재하지 않음
 
 -- 결과: 외래키 제약 조건 위반 에러!
@@ -239,7 +241,7 @@ VALUES (2, 999, 200, '2024-01-01');  -- machine_id = 999가 존재하지 않음
 
 **2. 참조 무결성 유지**
 ```sql
--- ❌ 이런 상황을 방지!
+-- 이런 상황을 방지!
 -- machine 테이블에서 기계 삭제 시도
 DELETE FROM machine WHERE id = 100;
 
@@ -353,7 +355,7 @@ public class RentalService {
 
 **1. 단일 Entity의 상태 변경**
 ```java
-//  Entity에!
+// Entity에!
 public void approve() {
     if (this.status != RentalStatus.PENDING) {
         throw new IllegalStateException("승인 대기 상태가 아닙니다");
@@ -365,7 +367,7 @@ public void approve() {
 
 **2. 유효성 검증**
 ```java
-//  Entity에!
+// Entity에!
 public void extend(LocalDate newEndDate) {
     if (newEndDate.isBefore(this.endDate)) {
         throw new IllegalArgumentException("연장일은 기존 종료일보다 늦어야 합니다");
@@ -377,7 +379,7 @@ public void extend(LocalDate newEndDate) {
 
 **3. 계산 로직**
 ```java
-//  Entity에!
+// Entity에!
 public long getRentalDays() {
     return ChronoUnit.DAYS.between(startDate, endDate) + 1;
 }
@@ -407,7 +409,7 @@ public void createRental(CreateRentalRequest request) {
 
 **2. 외부 서비스 호출**
 ```java
-// ✅ Service에!
+// Service에!
 public void completeRental(Long rentalId) {
     Rental rental = rentalRepository.findById(rentalId);
     rental.complete(LocalDate.now());
@@ -422,7 +424,7 @@ public void completeRental(Long rentalId) {
 
 **3. 트랜잭션 관리**
 ```java
-// ✅ Service에!
+// Service에!
 @Transactional
 public void cancelRentalAndRefund(Long rentalId) {
     Rental rental = rentalRepository.findById(rentalId);
@@ -439,13 +441,13 @@ public void cancelRentalAndRefund(Long rentalId) {
 ```java
 @Entity
 public class Rental {
-    // ✅ 상태 변경
+    // 상태 변경
     public void approve() { ... }
 
-    // ✅ 유효성 검증
+    // 유효성 검증
     public void extend(LocalDate newEndDate) { ... }
 
-    // ✅ 계산
+    // 계산
     public long getRentalDays() { ... }
 }
 ```
@@ -454,14 +456,14 @@ public class Rental {
 ```java
 @Service
 public class RentalService {
-    // ✅ 여러 Entity 조합
+    // 여러 Entity 조합
     public void createRental(CreateRentalRequest request) {
         Machine machine = ...;
         Customer customer = ...;
         Rental rental = Rental.builder()...;
     }
 
-    //  외부 서비스 호출
+    // 외부 서비스 호출
     public void completeWithNotification(Long rentalId) {
         Rental rental = rentalRepository.findById(rentalId);
         rental.complete(LocalDate.now());  // ← Entity 메서드
@@ -472,7 +474,7 @@ public class RentalService {
 
 ### 이론적 배경
 
-이것이 바로 **DDD (Domain-Driven Design, 도메인 주도 설계)**의 핵심 개념입니다!
+이것이 바로 DDD(Domain-Driven Design, 도메인 주도 설계)의 핵심 개념입니다!
 
 - **Martin Fowler**: "Rich Domain Model을 권장"
 - **Spring 공식**: 두 가지 모두 지원하지만 Rich Model 선호
@@ -480,3 +482,538 @@ public class RentalService {
 
 ### 핵심 원칙
 > **"Entity는 자신의 상태와 행동을 책임지고, Service는 여러 Entity를 조율한다"**
+
+---
+
+## Validation Annotation (@NotNull vs @NotBlank)
+
+### 기본 개념
+
+**Validation이란?**
+> 클라이언트가 보낸 데이터가 올바른지 검증하는 과정
+
+**주요 어노테이션:**
+- `@NotNull`: null 값만 체크(빈 문자열은 허용)
+- `@NotBlank`: null, 빈 문자열(""), 공백(" ")만으로 이루어진 문자열 모두 체크
+- `@NotEmpty`: null, 빈 문자열("") 체크 (공백만 있는 문자열은 허용)
+
+### 차이점 비교
+
+#### 각 어노테이션의 검증 범위
+
+```java
+// 테스트 값들
+String value1 = null;           // null
+String value2 = "";             // 빈 문자열
+String value3 = "   ";          // 공백만
+String value4 = "4인용 텐트";    // 정상 값 (단어 사이 공백 포함)
+```
+
+**비교표:**
+
+| 값 | @NotNull | @NotEmpty | @NotBlank |
+|---|----------|-----------|-----------|
+| `null` | 실패 | 실패 | 실패 |
+| `""` (빈 문자열) | 통과 | 실패 | 실패 |
+| `"   "` (공백만) | 통과 | 통과 | 실패 |
+| `"4인용 텐트"` | 통과 | 통과 | 통과 |
+
+### 실무 사용 가이드
+
+#### String 필드 → @NotBlank 사용
+
+```java
+@NotBlank  // 가장 엄격한 검증
+private String name;
+
+@NotBlank
+private String description;
+
+// 잘못된 예시
+@NotNull   // 빈 문자열 "" 허용됨 (너무 약함)
+private String name;
+```
+
+**이유:**
+- 사용자가 이름을 공백으로만 입력하는 것 방지
+- `"   "` 같은 무의미한 데이터 차단
+
+#### Enum/숫자 필드 → @NotNull 사용
+
+```java
+@NotNull  // Enum은 @NotNull만 사용
+private CampingCategory category;
+
+@NotNull  // 숫자도 @NotNull
+private Integer stockQuantity;
+
+@NotNull
+private BigDecimal baseDailyRate;
+
+// 잘못된 예시
+@NotBlank  // Enum이나 숫자에는 사용 불가! (컴파일 에러)
+private CampingCategory category;
+```
+
+**이유:**
+- @NotBlank는 String 타입에만 사용 가능
+- Enum과 숫자는 "빈 문자열" 개념이 없음
+
+### 실제 사용 예시
+
+#### CampingItemCreateRequest (올바른 예시)
+
+```java
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class CampingItemCreateRequest {
+
+    @NotBlank  // String → @NotBlank
+    private String name;
+
+    @NotNull   // Enum → @NotNull
+    private CampingCategory category;
+
+    @NotBlank  // String → @NotBlank
+    private String model;
+
+    @NotBlank  // String → @NotBlank (공백으로만 이루어진 설명 방지)
+    private String description;
+
+    @NotNull   // 숫자 → @NotNull
+    private Integer stockQuantity;
+
+    @NotNull   // BigDecimal → @NotNull
+    private BigDecimal baseDailyRate;
+
+    @NotNull   // Enum → @NotNull
+    private CampingItemStatus status;
+}
+```
+
+### 검증 실패 시 동작
+
+#### API 요청 예시
+
+**잘못된 요청:**
+```json
+POST /api/camping-items
+{
+  "name": "   ",           // 공백만 있음
+  "category": "TENT",
+  "model": "",             // 빈 문자열
+  "description": "좋은 텐트",
+  "stockQuantity": null,   // null
+  "baseDailyRate": 50000,
+  "status": "AVAILABLE"
+}
+```
+
+**응답:**
+```json
+HTTP 400 Bad Request
+{
+  "errors": [
+    {
+      "field": "name",
+      "message": "must not be blank"
+    },
+    {
+      "field": "model",
+      "message": "must not be blank"
+    },
+    {
+      "field": "stockQuantity",
+      "message": "must not be null"
+    }
+  ]
+}
+```
+
+### 헷갈리기 쉬운 케이스
+
+#### Q: "4인용 텐트"는 공백이 있는데 @NotBlank로 통과되나요?
+
+**A: 통과됩니다!**
+
+```java
+@NotBlank
+private String name;
+
+// 이런 값들은 모두 통과
+"4인용 텐트"         // 단어 사이 공백 OK
+"구스다운 침낭"       // 단어 사이 공백 OK
+"MSR 허브허브 텐트"  // 여러 공백 OK
+
+// 이런 값들은 실패
+"   "                // 공백만 있음
+""                   // 빈 문자열
+null                 // null
+```
+
+**@NotBlank가 체크하는 것:**
+- "의미 있는 문자가 하나라도 있는가?"
+- 공백만으로 이루어진 문자열인지 확인
+
+**@NotBlank가 체크하지 않는 것:**
+- 문자 사이에 공백이 있는지 (상관없음)
+
+### 핵심 정리
+
+#### 선택 가이드
+
+**1. String 필드**
+```java
+@NotBlank private String name;          // 권장
+@NotBlank private String description;   // 권장
+```
+
+**2. Enum 필드**
+```java
+@NotNull private CampingCategory category;     // 권장
+@NotNull private CampingItemStatus status;     // 권장
+```
+
+**3. 숫자 필드**
+```java
+@NotNull private Integer stockQuantity;        // 권장
+@NotNull private BigDecimal baseDailyRate;     // 권장
+```
+
+#### 핵심 원칙
+> **"String은 @NotBlank, 나머지는 @NotNull"**
+
+---
+
+## DTO (Data Transfer Object) 패턴
+
+### 기본 개념
+
+**DTO란?**
+> 계층 간 데이터를 전송하기 위한 객체. 특히 API 요청/응답 시 Entity를 직접 노출하지 않고 DTO로 변환하여 사용
+
+### 왜 필요한가?
+
+#### Entity를 직접 노출하면 발생하는 문제
+
+**1. 보안 문제**
+```java
+// Entity를 직접 반환
+@GetMapping("/api/users/{id}")
+public User getUser(Long id) {
+    return userRepository.findById(id);
+}
+
+// 응답에 password가 그대로 노출!
+{
+  "id": 1,
+  "name": "홍길동",
+  "email": "hong@example.com",
+  "password": "hashed_password_12345",  // 보안 위험!
+  "internalNote": "VIP 고객"             // 내부 정보 노출!
+}
+```
+
+**2. 순환 참조 문제**
+```java
+@Entity
+public class CampingItem {
+    @OneToMany
+    private List<CampingRental> rentals;  // 대여 목록
+}
+
+@Entity
+public class CampingRental {
+    @ManyToOne
+    private CampingItem campingItem;      // 장비
+}
+
+// Entity를 직접 반환하면
+// CampingItem → rentals → CampingItem → rentals → ... (무한 루프!)
+```
+
+**3. 불필요한 필드 노출**
+```java
+// 장비 목록 조회 시
+{
+  "id": 1,
+  "name": "4인용 텐트",
+  "createdAt": "2024-01-01T10:00:00",  // 목록에서는 불필요
+  "updatedAt": "2024-01-05T15:30:00",  // 목록에서는 불필요
+  "description": "매우 긴 설명..."      // 목록에서는 불필요
+}
+```
+
+### DTO의 종류
+
+#### Request DTO (요청용)
+
+**1. CreateRequest - 생성 요청**
+```java
+public class CampingItemCreateRequest {
+    // id 없음! (DB가 자동 생성)
+
+    @NotBlank
+    private String name;
+
+    @NotNull
+    private CampingCategory category;
+
+    @NotNull
+    private Integer stockQuantity;
+
+    // createdAt, updatedAt 없음! (서버가 자동 생성)
+}
+```
+
+**왜 id가 없나?**
+- 생성 시점에는 id가 존재하지 않음
+- DB의 `@GeneratedValue`가 자동으로 생성
+- 클라이언트가 id를 지정하면 보안 위험 (다른 데이터 덮어쓰기 가능)
+
+**왜 createdAt, updatedAt이 없나?**
+- 서버에서 `LocalDateTime.now()`로 자동 설정
+- 클라이언트가 보내면 시간 조작 가능 (신뢰할 수 없음)
+
+**2. UpdateRequest - 수정 요청**
+```java
+public class CampingItemUpdateRequest {
+    @NotBlank
+    private String name;
+
+    @NotBlank
+    private String model;
+
+    @NotBlank
+    private String description;
+
+    @NotNull
+    private BigDecimal baseDailyRate;
+
+    // category 없음! (생성 후 카테고리 변경 불가)
+    // stockQuantity 없음! (별도 API로 관리)
+    // status 없음! (별도 API로 관리)
+}
+```
+
+**왜 필드가 적나?**
+- **수정 가능한 필드만** 포함
+- category, stockQuantity, status는 별도 API로 관리 (실무 패턴)
+
+**3. 특수 목적 Request**
+```java
+// 재고 증감용
+public class StockUpdateRequest {
+    @NotNull
+    private Integer quantity;  // 증가/감소할 수량만
+}
+
+// 상태 변경용
+public class StatusUpdateRequest {
+    @NotNull
+    private CampingItemStatus status;  // 변경할 상태만
+}
+```
+
+#### Response DTO (응답용)
+
+```java
+public class CampingItemResponse {
+    // id 포함! (클라이언트가 알아야 함)
+    private Long id;
+
+    private String name;
+    private CampingCategory category;
+    private String model;
+    private String description;
+    private Integer stockQuantity;
+    private BigDecimal baseDailyRate;
+    private CampingItemStatus status;
+
+    // createdAt, updatedAt 포함! (조회 결과에 필요)
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    // validation 어노테이션 없음!
+    // (서버가 보내는 데이터라 검증 불필요)
+}
+```
+
+### Entity ↔ DTO 변환
+
+#### Static Factory Method 패턴
+
+```java
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class CampingItemResponse {
+    private Long id;
+    private String name;
+    private CampingCategory category;
+    // ... 나머지 필드
+
+    // Static Factory Method
+    public static CampingItemResponse from(CampingItem entity) {
+        return new CampingItemResponse(
+            entity.getId(),
+            entity.getName(),
+            entity.getCategory(),
+            entity.getModel(),
+            entity.getDescription(),
+            entity.getStockQuantity(),
+            entity.getBaseDailyRate(),
+            entity.getStatus(),
+            entity.getCreatedAt(),
+            entity.getUpdatedAt()
+        );
+    }
+}
+```
+
+**사용 예시:**
+```java
+// Service에서
+public CampingItemResponse findById(Long id) {
+    CampingItem entity = repository.findById(id)
+        .orElseThrow(() -> new EntityNotFoundException("장비를 찾을 수 없습니다"));
+
+    return CampingItemResponse.from(entity);  // 간단한 변환!
+}
+```
+
+**장점:**
+- 변환 로직이 DTO에 응집
+- `new CampingItemResponse(...)`보다 의미 명확
+- 유지보수 용이
+
+### Request DTO → Entity 변환
+
+#### Builder 패턴 활용
+
+```java
+// Service에서
+public CampingItemResponse create(CampingItemCreateRequest request) {
+    // DTO → Entity 변환
+    CampingItem entity = CampingItem.builder()
+        .name(request.getName())
+        .category(request.getCategory())
+        .model(request.getModel())
+        .description(request.getDescription())
+        .stockQuantity(request.getStockQuantity())
+        .baseDailyRate(request.getBaseDailyRate())
+        .status(request.getStatus())
+        .build();  // createdAt, updatedAt은 생성자에서 자동 설정
+
+    CampingItem saved = repository.save(entity);
+
+    // Entity → Response DTO 변환
+    return CampingItemResponse.from(saved);
+}
+```
+
+### 실무 활용 예시
+
+#### API 전체 흐름
+
+```java
+// 1. 클라이언트 요청
+POST /api/camping-items
+{
+  "name": "4인용 텐트",
+  "category": "TENT",
+  "model": "MSR 허브허브",
+  "description": "4인용 돔 텐트",
+  "stockQuantity": 10,
+  "baseDailyRate": 50000,
+  "status": "AVAILABLE"
+}
+
+// 2. Controller - Request DTO로 받음
+@PostMapping("/api/camping-items")
+public ResponseEntity<CampingItemResponse> create(
+    @Valid @RequestBody CampingItemCreateRequest request) {  // DTO로 받음
+
+    CampingItemResponse response = campingItemService.create(request);
+    return ResponseEntity.ok(response);
+}
+
+// 3. Service - DTO → Entity 변환, 처리 후 Entity → DTO 변환
+public CampingItemResponse create(CampingItemCreateRequest request) {
+    CampingItem entity = CampingItem.builder()
+        .name(request.getName())
+        // ...
+        .build();
+
+    CampingItem saved = repository.save(entity);
+    return CampingItemResponse.from(saved);  // DTO로 변환
+}
+
+// 4. 클라이언트 응답 - Response DTO
+{
+  "id": 1,                              // 생성된 id
+  "name": "4인용 텐트",
+  "category": "TENT",
+  "model": "MSR 허브허브",
+  "description": "4인용 돔 텐트",
+  "stockQuantity": 10,
+  "baseDailyRate": 50000,
+  "status": "AVAILABLE",
+  "createdAt": "2024-12-31T17:00:00",   // 서버가 자동 생성
+  "updatedAt": "2024-12-31T17:00:00"    // 서버가 자동 생성
+}
+```
+
+### DTO 설계 원칙
+
+#### Request DTO
+
+**CreateRequest:**
+- id 제외 (DB 자동 생성)
+- createdAt, updatedAt 제외 (서버 자동 생성)
+- validation 포함 (@NotNull, @NotBlank)
+- 생성에 필요한 모든 필드
+
+**UpdateRequest:**
+- 수정 가능한 필드만
+- validation 포함
+- 변경 불가 필드 제외 (category 등)
+- 별도 API로 관리할 필드 제외 (stockQuantity, status)
+
+**특수 목적 Request:**
+- 해당 작업에 필요한 최소 필드만
+- 예: StockUpdateRequest는 quantity만
+
+#### Response DTO
+
+- 모든 정보 포함 (id, createdAt, updatedAt 포함)
+- validation 불필요 (서버가 보내는 데이터)
+- static factory method (from()) 제공
+- Entity의 민감한 정보는 제외 가능
+
+### 비교표
+
+| 항목 | Entity | CreateRequest | UpdateRequest | Response |
+|------|--------|---------------|---------------|----------|
+| id | O (자동 생성) | X | X | O |
+| 비즈니스 필드 | O | O | O (수정 가능한 것만) | O |
+| createdAt | O (자동 생성) | X | X | O |
+| updatedAt | O (자동 설정) | X | X | O |
+| validation | X | O | O | X |
+| 비즈니스 로직 | O | X | X | X |
+
+### 핵심 정리
+
+#### DTO 사용 이유
+1. **보안**: 민감한 정보 노출 방지
+2. **순환 참조 방지**: Entity 간 관계로 인한 무한 루프 방지
+3. **API 스펙 명확화**: 필요한 데이터만 주고받음
+4. **유연성**: API 변경이 Entity에 영향 없음
+
+#### 변환 패턴
+- **Request → Entity**: Builder 패턴
+- **Entity → Response**: Static Factory Method (`from()`)
+
+#### 핵심 원칙
+> **"Entity는 절대 API에 직접 노출하지 않는다. 항상 DTO로 변환한다"**
